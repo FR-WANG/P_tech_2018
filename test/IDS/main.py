@@ -1,6 +1,7 @@
 from __future__ import division, print_function, absolute_import
 from NetworkBuilder import NetworkBuilder
-
+from sklearn import preprocessing
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from os.path import isfile, join
@@ -20,18 +21,70 @@ def shuffle_and_batch(data, labels, batch_size):
     return data[:batch_size], labels[:batch_size]
 
 
-data = []
-labels = []
-with open('../data/TrafficLabelling/train_set.csv', 'r') as f:
-    reader = csv.reader(f)
-    for row in reader:
-        data = np.append(data, row[0:79])
-        labels = np.append(labels, row[79])
+# load data
+def loaddata():
+    train = pd.read_csv(
+        "~/PycharmProjects/data/TrafficLabelling/train_set.csv",
+        encoding="ISO-8859-1",
+        low_memory=False)
+    test = pd.read_csv(
+        "~/PycharmProjects/data/TrafficLabelling/test_set.csv",
+        encoding="ISO-8859-1",
+        low_memory=False)
+    crossval = pd.read_csv(
+        "~/PycharmProjects/data/TrafficLabelling/crossval_set.csv",
+        encoding="ISO-8859-1",
+        low_memory=False)
+    return train, test, crossval
 
-data = data.reshape((-1, 79))
-input('Continue to training')
+
+def changelabel(train, test, crossval):
+    le = preprocessing.LabelEncoder()
+    le.fit(['BENIGN',
+            'FTP-Patator',
+            'SSH-Patator',
+            'DoS Hulk',
+            'DoS GoldenEye',
+            'DoS slowloris',
+            'DoS Slowhttptest',
+            'Heartbleed',
+            'Web Attack \x96 Brute Force',
+            'Web Attack \x96 XSS',
+            'Web Attack \x96 Sql Injection',
+            'Infiltration',
+            'Bot',
+            'PortScan',
+            'DDoS'])
+    train[' Label'] = le.transform(train[' Label'])
+    test[' Label'] = le.transform(test[' Label'])
+    crossval[' Label'] = le.transform(crossval[' Label'])
+    return train, test, crossval
 
 
+def main():
+    train, test, crossval = loaddata()
+    train, test, crossval = changelabel(train, test, crossval)
+
+    # normalization
+
+    train = preprocessing.scale(train)
+    test = preprocessing.scale(test)
+    crossval = preprocessing.scale(crossval)
+    X_TRAIN = train[:, 1:79]
+    Y_TRAIN = train[:, 79]
+    X_TEST = test[:, 1:79]
+    Y_TEST = test[:, 79]
+    X_CROSSVAL = crossval[:, 1:79]
+    Y_CROSSVAL = crossval[:, 79]
+
+    print(X_TRAIN.shape,Y_TRAIN.shape,X_TEST.shape,Y_TEST.shape,X_CROSSVAL.shape,Y_CROSSVAL.shape)
+
+
+
+if __name__ == "__main__":
+    main()
+
+'''
 with tf.name_scope("Input") as scope:
     input_data = tf.placeholder(dtype='float', shape=[None, 79], name='input')
 
@@ -116,3 +169,4 @@ with tf.Session() as sess:
 
 
 input("Prompt")
+'''

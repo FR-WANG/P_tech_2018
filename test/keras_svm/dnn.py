@@ -126,7 +126,6 @@ def main():
     '''
     Y_TRAIN = keras.utils.to_categorical(Y_TRAIN, num_classes=15)
     Y_TEST = keras.utils.to_categorical(Y_TEST, num_classes=15)
-
     model = MLP()
     model.fit(X_TRAIN, Y_TRAIN,
               epochs=3,
