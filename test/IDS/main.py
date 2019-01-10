@@ -1,5 +1,5 @@
 from __future__ import division, print_function, absolute_import
-from NetworkBuilder import NetworkBuilder
+import NetworkBuilder
 from sklearn import preprocessing
 import pandas as pd
 import numpy as np
@@ -11,65 +11,18 @@ import os
 import pickle
 import tensorflow as tf
 import csv
-
-
-def shuffle_and_batch(data, labels, batch_size):
-    rng_state = np.random.get_state()
-    np.random.shuffle(data)
-    np.random.set_state(rng_state)
-    np.random.shuffle(labels)
-    return data[:batch_size], labels[:batch_size]
-
-
-# load data
-def loaddata():
-    train = pd.read_csv(
-        "~/PycharmProjects/data/TrafficLabelling/train_set.csv",
-        encoding="ISO-8859-1",
-        low_memory=False)
-    test = pd.read_csv(
-        "~/PycharmProjects/data/TrafficLabelling/test_set.csv",
-        encoding="ISO-8859-1",
-        low_memory=False)
-    crossval = pd.read_csv(
-        "~/PycharmProjects/data/TrafficLabelling/crossval_set.csv",
-        encoding="ISO-8859-1",
-        low_memory=False)
-    return train, test, crossval
-
-
-def changelabel(train, test, crossval):
-    le = preprocessing.LabelEncoder()
-    le.fit(['BENIGN',
-            'FTP-Patator',
-            'SSH-Patator',
-            'DoS Hulk',
-            'DoS GoldenEye',
-            'DoS slowloris',
-            'DoS Slowhttptest',
-            'Heartbleed',
-            'Web Attack \x96 Brute Force',
-            'Web Attack \x96 XSS',
-            'Web Attack \x96 Sql Injection',
-            'Infiltration',
-            'Bot',
-            'PortScan',
-            'DDoS'])
-    train[' Label'] = le.transform(train[' Label'])
-    test[' Label'] = le.transform(test[' Label'])
-    crossval[' Label'] = le.transform(crossval[' Label'])
-    return train, test, crossval
+import gen_data
 
 
 def main():
-    train, test, crossval = loaddata()
-    train, test, crossval = changelabel(train, test, crossval)
+    train, test, crossval = gen_data.loaddata()
+    train, test, crossval = gen_data.changelabel(train, test, crossval)
 
     # normalization
 
-    train = preprocessing.scale(train)
-    test = preprocessing.scale(test)
-    crossval = preprocessing.scale(crossval)
+    train, train_mean, train_std = gen_data.z_normalisation(train)
+    test,test_mean,test_std = gen_data.z_normalisation(test)
+    crossval,cross_mean,cross_std = gen_data.z_normalisation(crossval)
     X_TRAIN = train[:, 1:79]
     Y_TRAIN = train[:, 79]
     X_TEST = test[:, 1:79]
@@ -77,8 +30,13 @@ def main():
     X_CROSSVAL = crossval[:, 1:79]
     Y_CROSSVAL = crossval[:, 79]
 
-    print(X_TRAIN.shape,Y_TRAIN.shape,X_TEST.shape,Y_TEST.shape,X_CROSSVAL.shape,Y_CROSSVAL.shape)
-
+    print(
+        X_TRAIN.shape,
+        Y_TRAIN.shape,
+        X_TEST.shape,
+        Y_TEST.shape,
+        X_CROSSVAL.shape,
+        Y_CROSSVAL.shape)
 
 
 if __name__ == "__main__":
