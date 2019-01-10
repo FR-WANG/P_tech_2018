@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+import keras
 
 
 def shuffle_and_batch(data, labels, batch_size):
@@ -54,3 +55,8 @@ def changelabel(train, test, crossval):
 def z_normalisation(data):
     data = preprocessing.scale(data)
     return data, data.mean, data.std
+
+
+def one_hot_coding(data):
+    data = keras.utils.to_categorical(data, num_classes=15)
+    return data
