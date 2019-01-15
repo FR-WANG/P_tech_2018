@@ -29,9 +29,9 @@ def main():
     Y_TEST = test[:, 79]
     X_CROSSVAL = crossval[:, 1:79]
     Y_CROSSVAL = crossval[:, 79]
-    Y_TRAIN = gen_data.one_hot_coding(Y_TRAIN)
-    Y_TEST = gen_data.one_hot_coding(Y_TEST)
-    Y_CROSSVAL = gen_data.one_hot_coding(Y_CROSSVAL)
+    Y_TRAIN = gen_data.one_hot_coding(Y_TRAIN,15)
+    Y_TEST = gen_data.one_hot_coding(Y_TEST,15)
+    Y_CROSSVAL = gen_data.one_hot_coding(Y_CROSSVAL,15)
     print(
         X_TRAIN.shape,
         Y_TRAIN.shape,
