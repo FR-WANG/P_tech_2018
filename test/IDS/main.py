@@ -40,13 +40,20 @@ def main():
         X_CROSSVAL.shape,
         Y_CROSSVAL.shape)
 
-    nb = NetworkBuilder("Reseau1", 78, 15, 3, [256, 256, 15])
+    input_data = tf.placeholder(
+        dtype='float', shape=[None, 78], name='input')
+
+    target_labels = tf.placeholder(
+        dtype='float', shape=[None, 15], name='target')
+
+    nb = NetworkBuilder("Reseau1", input_data, 3, [256, 256, 15])
+
     nb.create_network()
 
     with tf.name_scope("Optimization") as scope:
         global_step = tf.Variable(0, name='global_step', trainable=False)
         cost = tf.nn.softmax_cross_entropy_with_logits_v2(
-            logits=nb.model, labels=nb.target_labels)
+            logits=nb.model, labels=target_labels)
         cost = tf.reduce_mean(cost)
         tf.summary.scalar("cost", cost)
 
@@ -57,8 +64,8 @@ def main():
     with tf.name_scope('accuracy') as scope:
         correct_pred = tf.equal(
             tf.argmax(
-                nb.model, 1), tf.argmax(
-                nb.target_labels, 1))
+                nb.prediction, 1), tf.argmax(
+                target_labels, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
     with tf.Session() as sess:
@@ -91,7 +98,7 @@ def main():
                 X_TRAIN, Y_TRAIN, batchSize)
 
             error, sumOut, acu, steps, _ = sess.run([cost, summaryMerged, accuracy, global_step, optimizer], feed_dict={
-                                                    nb.input_data: data_batch, nb.target_labels: label_batch})
+                                                    input_data: data_batch, target_labels: label_batch})
             writer.add_summary(sumOut, steps)
             print(
                 "epoch=",
