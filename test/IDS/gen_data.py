@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-import keras
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 
@@ -62,7 +61,6 @@ def one_hot_coding(y, num_classes=None):
    # print('data',data)
    # data = keras.utils.to_categorical(data, num_classes=15)
    # print(data)
-
     y = np.array(y, dtype='int')
     input_shape = y.shape
     if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
