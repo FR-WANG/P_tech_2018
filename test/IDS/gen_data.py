@@ -4,12 +4,21 @@ from sklearn import preprocessing
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 
-def shuffle_and_batch(data, labels, batch_size):
+
+def shuffle(data, labels, batch_size):
     rng_state = np.random.get_state()
     np.random.shuffle(data)
     np.random.set_state(rng_state)
     np.random.shuffle(labels)
-    return data[:batch_size], labels[:batch_size]
+
+    batch_number = int(len(data) / batch_size)
+    return data, labels, batch_number
+
+
+def batch(data, label, batch_num, batchSize):
+    data_batch = data[(batch_num * batchSize) : ((batch_num + 1) * batchSize) - 1]
+    label_batch = label[(batch_num * batchSize) : ((batch_num + 1) * batchSize) - 1]
+    return data_batch, label_batch
 
 
 # load data
@@ -75,4 +84,3 @@ def one_hot_coding(y, num_classes=None):
     output_shape = input_shape + (num_classes,)
     categorical = np.reshape(categorical, output_shape)
     return categorical
-

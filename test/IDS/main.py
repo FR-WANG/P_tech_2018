@@ -17,27 +17,26 @@ import gen_data
 np.set_printoptions(threshold=np.inf)
 
 
-
 # distinguish the fonction of train and test
 is_train = False
 
 
 # definition the number of epochs and batchSize
-epochs = 4000
-batchSize = 300
+epochs = 20
+batchSize = 50
 
 # definition of the path
 model_save_path = "./modele/"
 model_name = 'Modele1'
 
 # main fonction
+
+
 def main():
 
     # load data and change the label to number
     train, test, crossval = gen_data.loaddata()
     train, test, crossval = gen_data.changelabel(train, test, crossval)
-
-
 
     print(type(train))
 
@@ -51,8 +50,6 @@ def main():
     Y_TRAIN = gen_data.one_hot_coding(Y_TRAIN, 15)
     Y_TEST = gen_data.one_hot_coding(Y_TEST, 15)
     Y_CROSSVAL = gen_data.one_hot_coding(Y_CROSSVAL, 15)
-
-
 
     # normalization
 
@@ -83,7 +80,7 @@ def main():
         cost = tf.reduce_mean(cost)
         tf.summary.scalar("cost", cost)
         optimizer = tf.train.AdamOptimizer(
-            learning_rate=0.01).minimize(
+            learning_rate=0.001).minimize(
             cost, global_step=global_step)
 
     # definition of the accuracy with tensorflow
@@ -124,23 +121,29 @@ def main():
 
             for epoch in range(epochs):
 
-                data_batch, label_batch = gen_data.shuffle_and_batch(
+                data, label, batch_num = gen_data.shuffle(
                     X_TRAIN, Y_TRAIN, batchSize)
 
-                error, sumOut, acu, steps, _ = sess.run([cost, summaryMerged, accuracy, global_step, optimizer], feed_dict={
-                                                        input_data: data_batch, target_labels: label_batch})
-                writer.add_summary(sumOut, steps)
-                print(
-                    "epoch=",
-                    epoch,
-                    "Total Samples Trained=",
-                    steps *
-                    batchSize,
-                    "err=",
-                    error,
-                    "accuracy=",
-                    acu)
-                if epoch % 100 == 0:
+                for i in range(batch_num):
+
+                    data_batch, label_batch = gen_data.batch(
+                        data, label, i, batchSize)
+
+                    error, sumOut, acu, steps, _ = sess.run([cost, summaryMerged, accuracy, global_step, optimizer], feed_dict={
+                                                            input_data: data_batch, target_labels: label_batch})
+                    writer.add_summary(sumOut, steps)
+                    if i % 1000 == 0:
+                        print(
+                            "epoch=",
+                            epoch,
+                            "Total Samples Trained=",
+                            steps *
+                            batchSize,
+                            "err=",
+                            error,
+                            "accuracy=",
+                            acu)
+                if epoch % 1 == 0:
                     print("Saving the model")
                     saver.save(
                         sess,
@@ -150,14 +153,17 @@ def main():
         else:
             saver.restore(sess, tf.train.latest_checkpoint(model_save_path))
             val_loss, val_acc, pred = sess.run([cost, accuracy, nb.prediction], feed_dict={
-                                         input_data: X_TEST, target_labels: Y_TEST})
+                input_data: X_TEST, target_labels: Y_TEST})
             print('val_loss:%f, val_acc:%f' % (val_loss, val_acc))
 
-            #confusion matrix
-            Y_true = np.argmax(Y_TEST,axis=1)
+            # confusion matrix
+            Y_true = np.argmax(Y_TEST, axis=1)
 
-            Y_predict = np.argmax(pred,axis=1)
-            confuse_martix = sess.run(tf.convert_to_tensor(tf.confusion_matrix(Y_true, Y_predict)))
+            Y_predict = np.argmax(pred, axis=1)
+            confuse_martix = sess.run(
+                tf.convert_to_tensor(
+                    tf.confusion_matrix(
+                        Y_true, Y_predict)))
             print(confuse_martix)
 
 
