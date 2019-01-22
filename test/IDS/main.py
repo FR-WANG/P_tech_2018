@@ -25,8 +25,8 @@ is_train = False
 epochs = 20
 batchSize = 50
 
-# definition of the path
-model_save_path = "./modele/"
+# definition of the path : to change accordingly to your path leading to the model
+model_save_path = "/comptes/etudiant/E17C429K/PycharmProjects/modele/"
 model_name = 'Modele1'
 
 # main fonction
