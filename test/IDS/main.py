@@ -18,11 +18,13 @@ np.set_printoptions(threshold=np.inf)
 
 
 # distinguish the fonction of train and test
-is_train = False
+is_train = True
+#choose if cross-validation is done during the training
+validation = True
 
 
 # definition the number of epochs and batchSize
-epochs = 20
+epochs = 50
 batchSize = 50
 
 # definition of the path : to change accordingly to your path leading to the model
@@ -143,6 +145,7 @@ def main():
                             error,
                             "accuracy=",
                             acu)
+                #Save the model every epoch
                 if epoch % 1 == 0:
                     print("Saving the model")
                     saver.save(
@@ -150,11 +153,16 @@ def main():
                         model_save_path +
                         model_name,
                         global_step=steps)
+                #Accuracy on cross-validation set every 10 epochs
+                if (epoch % 10 == 0) and (validation == True):
+                    cross_loss, cross_acc = sess.run([cost, accuracy], feed_dict={
+                        input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
+                    print('Cross-validation  ---   Loss :%f, Accuracy :%f' % (cross_loss, cross_acc))
         else:
             saver.restore(sess, tf.train.latest_checkpoint(model_save_path))
-            val_loss, val_acc, pred = sess.run([cost, accuracy, nb.prediction], feed_dict={
+            test_loss, test_acc, pred = sess.run([cost, accuracy, nb.prediction], feed_dict={
                 input_data: X_TEST, target_labels: Y_TEST})
-            print('val_loss:%f, val_acc:%f' % (val_loss, val_acc))
+            print('val_loss:%f, val_acc:%f' % (test_loss, test_acc))
 
             # confusion matrix
             Y_true = np.argmax(Y_TEST, axis=1)
