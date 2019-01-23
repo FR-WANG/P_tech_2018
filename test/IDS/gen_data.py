@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
+from sklearn.utils import shuffle
 from sklearn import preprocessing
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
-
+import tensorflow as tf
 
 def shuffle(data, labels, batch_size):
     rng_state = np.random.get_state()
@@ -12,12 +11,12 @@ def shuffle(data, labels, batch_size):
     np.random.shuffle(labels)
 
     batch_number = int(len(data) / batch_size)
+
     return data, labels, batch_number
 
-
 def batch(data, label, batch_num, batchSize):
-    data_batch = data[(batch_num * batchSize) : ((batch_num + 1) * batchSize) - 1]
-    label_batch = label[(batch_num * batchSize) : ((batch_num + 1) * batchSize) - 1]
+    data_batch = data[(batch_num * batchSize): ((batch_num + 1) * batchSize) - 1]
+    label_batch = label[(batch_num * batchSize): ((batch_num + 1) * batchSize) - 1]
     return data_batch, label_batch
 
 
@@ -64,6 +63,14 @@ def changelabel(train, test, crossval):
 def z_normalisation(data):
     data = preprocessing.scale(data)
     return data, data.mean, data.std
+
+
+def normalize(train, test, crossval):
+    scaler = preprocessing.StandardScaler().fit(train)
+    train_scaled = scaler.transform(train)
+    test_scaled = scaler.transform(test)
+    crossval_scaled = scaler.transform(crossval)
+    return train_scaled, test_scaled, crossval_scaled
 
 
 def one_hot_coding(y, num_classes=None):

@@ -18,25 +18,22 @@ class NetworkBuilder:
     def __init__(
             self,
             name,
-            inputSize,
-            outputSize,
+            inputLayer,
             nbLayers,
             sizeLayers,
             activation,
             drop):
         self.name = name
-        self.input_data = tf.placeholder(
-            dtype='float', shape=[None, inputSize], name='input')
-        self.target_labels = tf.placeholder(
-            dtype='float', shape=[None, outputSize], name='target')
+        self.input_data = inputLayer
         self.nbLayers = nbLayers
         self.sizeLayers = sizeLayers
         self.model = self.input_data
+        self.prediction = self.model
         self.droprate = drop
         self.activationType = activation
 
     def create_network(self):
-        for i in range(0, self.nbLayers - 1):
+        for i in range(0, self.nbLayers):
             input_size = self.model.get_shape().as_list()[-1]
             weights = tf.Variable(tf.random_normal(
                 [input_size, self.sizeLayers[i]]), name='dense_weigh')
@@ -44,7 +41,7 @@ class NetworkBuilder:
                 [self.sizeLayers[i]]), name='dense_biases')
             self.model = tf.matmul(self.model, weights) + biases
             if i == self.nbLayers - 1:
-                self.model = tf.nn.softmax(self.model)
+                self.prediction = tf.nn.softmax(self.model)
             else:
                 if self.activationType == 1:
                     self.model = tf.nn.relu(self.model)

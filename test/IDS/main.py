@@ -1,5 +1,5 @@
 from __future__ import division, print_function, absolute_import
-from NetworkBuilderV2 import NetworkBuilder
+from NetworkBuilderV3 import NetworkBuilder
 from sklearn import preprocessing
 import pandas as pd
 import numpy as np
@@ -54,10 +54,8 @@ def main():
     Y_CROSSVAL = gen_data.one_hot_coding(Y_CROSSVAL, 15)
 
     # normalization
+    X_TRAIN, X_TEST, X_CROSSVAL = gen_data.normalize(X_TRAIN, X_TEST, X_CROSSVAL)
 
-    X_TRAIN, train_mean, train_std = gen_data.z_normalisation(X_TRAIN)
-    X_TEST, test_mean, test_std = gen_data.z_normalisation(X_TEST)
-    X_CROSSVAL, cross_mean, cross_std = gen_data.z_normalisation(X_CROSSVAL)
     print(
         X_TRAIN.shape,
         Y_TRAIN.shape,
@@ -71,7 +69,7 @@ def main():
         dtype='float', shape=[None, 78], name='input')
     target_labels = tf.placeholder(
         dtype='float', shape=[None, 15], name='target')
-    nb = NetworkBuilder("Reseau1", input_data, 3, [256, 256, 15])
+    nb = NetworkBuilder("Reseau1", input_data, 3, [256, 256, 15], 2,0)
     nb.create_network()
 
     # definition of the optimizer with tensorflow
