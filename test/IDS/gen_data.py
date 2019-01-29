@@ -4,6 +4,7 @@ from sklearn.utils import shuffle
 from sklearn import preprocessing
 import tensorflow as tf
 
+
 def shuffle(data, labels, batch_size):
     rng_state = np.random.get_state()
     np.random.shuffle(data)
@@ -14,9 +15,12 @@ def shuffle(data, labels, batch_size):
 
     return data, labels, batch_number
 
+
 def batch(data, label, batch_num, batchSize):
-    data_batch = data[(batch_num * batchSize): ((batch_num + 1) * batchSize) - 1]
-    label_batch = label[(batch_num * batchSize): ((batch_num + 1) * batchSize) - 1]
+    data_batch = data[(batch_num * batchSize)
+                       : ((batch_num + 1) * batchSize) - 1]
+    label_batch = label[(batch_num * batchSize)
+                         : ((batch_num + 1) * batchSize) - 1]
     return data_batch, label_batch
 
 
@@ -74,9 +78,6 @@ def normalize(train, test, crossval):
 
 
 def one_hot_coding(y, num_classes=None):
-   # print('data',data)
-   # data = keras.utils.to_categorical(data, num_classes=15)
-   # print(data)
     y = np.array(y, dtype='int')
     input_shape = y.shape
     if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:

@@ -19,7 +19,7 @@ np.set_printoptions(threshold=np.inf)
 
 # distinguish the fonction of train and test
 is_train = True
-#choose if cross-validation is done during the training
+# choose if cross-validation is done during the training
 validation = True
 
 
@@ -27,7 +27,8 @@ validation = True
 epochs = 50
 batchSize = 50
 
-# definition of the path : to change accordingly to your path leading to the model
+# definition of the path : to change accordingly to your path leading to
+# the model
 model_save_path = "/comptes/etudiant/E17C429K/PycharmProjects/modele/"
 model_name = 'Modele1'
 
@@ -54,7 +55,8 @@ def main():
     Y_CROSSVAL = gen_data.one_hot_coding(Y_CROSSVAL, 15)
 
     # normalization
-    X_TRAIN, X_TEST, X_CROSSVAL = gen_data.normalize(X_TRAIN, X_TEST, X_CROSSVAL)
+    X_TRAIN, X_TEST, X_CROSSVAL = gen_data.normalize(
+        X_TRAIN, X_TEST, X_CROSSVAL)
 
     print(
         X_TRAIN.shape,
@@ -69,7 +71,7 @@ def main():
         dtype='float', shape=[None, 78], name='input')
     target_labels = tf.placeholder(
         dtype='float', shape=[None, 15], name='target')
-    nb = NetworkBuilder("Reseau1", input_data, 3, [256, 256, 15], 2,0)
+    nb = NetworkBuilder("Reseau1", input_data, 3, [256, 256, 15], 2, 0)
     nb.create_network()
 
     # definition of the optimizer with tensorflow
@@ -113,7 +115,8 @@ def main():
             # setting global steps
             tf.global_variables_initializer().run()
 
-            if os.path.exists(model_save_path + 'checkpoint'):
+            if os.path.exists(model_save_path +
+                              'checkpoint'):
                 # saver = tf.train.import_meta_graph('./saved '+modelName+'/model.ckpt.meta')
                 saver.restore(
                     sess, tf.train.latest_checkpoint(model_save_path))
@@ -121,17 +124,18 @@ def main():
 
             for epoch in range(epochs):
 
-                data, label, batch_num = gen_data.shuffle(
-                    X_TRAIN, Y_TRAIN, batchSize)
+                data, label, batch_num = gen_data.shuffle(X_TRAIN,
+                                                          Y_TRAIN, batchSize)
 
                 for i in range(batch_num):
 
                     data_batch, label_batch = gen_data.batch(
                         data, label, i, batchSize)
 
-                    error, sumOut, acu, steps, _ = sess.run([cost, summaryMerged, accuracy, global_step, optimizer], feed_dict={
-                                                            input_data: data_batch, target_labels: label_batch})
-                    writer.add_summary(sumOut, steps)
+                    error, sum_out, acu, steps, _ = sess.run([cost, summaryMerged, accuracy, global_step, optimizer],
+                                                             feed_dict={input_data: data_batch,
+                                                                        target_labels: label_batch})
+                    writer.add_summary(sum_out, steps)
                     if i % 1000 == 0:
                         print(
                             "epoch=",
@@ -143,7 +147,7 @@ def main():
                             error,
                             "accuracy=",
                             acu)
-                #Save the model every epoch
+                # Save the model every epoch
                 if epoch % 1 == 0:
                     print("Saving the model")
                     saver.save(
@@ -151,26 +155,67 @@ def main():
                         model_save_path +
                         model_name,
                         global_step=steps)
-                #Accuracy on cross-validation set every 10 epochs
-                if (epoch % 10 == 0) and (validation == True):
+                # Loss and Accuracy on train and cross-validation set every 10
+                # epochs
+                if (epoch % 10 == 0) and (validation):
                     cross_loss, cross_acc = sess.run([cost, accuracy], feed_dict={
                         input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
-                    print('Cross-validation  ---   Loss :%f, Accuracy :%f' % (cross_loss, cross_acc))
+                    train_loss, train_acc = sess.run([cost, accuracy], feed_dict={
+                        input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
+                    print(
+                        'Train  ---   Loss :%f, Accuracy :%f' %
+                        (train_loss, train_acc))
+                    print(
+                        'Cross-validation  ---   Loss :%f, Accuracy :%f' %
+                        (cross_loss, cross_acc))
+            # Loss and Accuracy on train and cross-validation set in the end of
+            # training
+            cross_loss, cross_acc, cross_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
+                input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
+            train_loss, train_acc, train_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
+                input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
+            print(
+                'Train  ---   Loss :%f, Accuracy :%f' %
+                (train_loss, train_acc))
+            print(
+                'Cross-validation  ---   Loss :%f, Accuracy :%f' %
+                (cross_loss, cross_acc))
+
+            # confusion matrix of training set
+            train_true = np.argmax(Y_TRAIN, axis=1)
+
+            train_predict = np.argmax(train_prediction, axis=1)
+            train_confuse_mat = sess.run(
+                tf.convert_to_tensor(
+                    tf.confusion_matrix(
+                        train_true, train_predict)))
+            print(train_confuse_mat)
+
+            # confusion matrix of cross validation set
+            cross_true = np.argmax(Y_CROSSVAL, axis=1)
+
+            cross_predict = np.argmax(train_prediction, axis=1)
+            confuse_mat = sess.run(
+                tf.convert_to_tensor(
+                    tf.confusion_matrix(
+                        cross_true, cross_predict)))
+            print(confuse_mat)
+
         else:
             saver.restore(sess, tf.train.latest_checkpoint(model_save_path))
-            test_loss, test_acc, pred = sess.run([cost, accuracy, nb.prediction], feed_dict={
+            test_loss, test_acc, test_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
                 input_data: X_TEST, target_labels: Y_TEST})
             print('val_loss:%f, val_acc:%f' % (test_loss, test_acc))
 
             # confusion matrix
-            Y_true = np.argmax(Y_TEST, axis=1)
+            test_true = np.argmax(Y_TEST, axis=1)
 
-            Y_predict = np.argmax(pred, axis=1)
-            confuse_martix = sess.run(
+            test_predict = np.argmax(test_prediction, axis=1)
+            confuse_mat = sess.run(
                 tf.convert_to_tensor(
                     tf.confusion_matrix(
-                        Y_true, Y_predict)))
-            print(confuse_martix)
+                        test_true, test_predict)))
+            print(confuse_mat)
 
 
 if __name__ == "__main__":
