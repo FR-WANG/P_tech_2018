@@ -7,60 +7,60 @@ import gen_data
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 import visualization
 
-# print everything
+# Print everything
 np.set_printoptions(threshold=np.inf)
 
 
-# distinguish the fonction of train and test
+# Distinguish the function of train and test
 is_train = False
 # choose if cross-validation is done during the training
 validation = True
 
 
-# definition the number of epochs and batchSize
+# Definition the number of epochs and batchSize
 epochs = 50
 batchSize = 50
 
-# definition of the path : to change accordingly to your path leading to
+# Definition of the path : to change accordingly to your path leading to
 # the model
 model_save_path = "/comptes/etudiant/E17C429K/PycharmProjects/modele/"
 model_name = 'Modele1'
 
-# main fonction
+# Main function
 
 
 def main():
 
-    # load data and change the label to number
+    # Load data and change the label to number
     train, test, crossval = gen_data.loaddata()
     train, test, crossval = gen_data.changelabel(train, test, crossval)
 
     print(type(train))
 
-    # diviser the data to three set and change them to forme onhot
-    X_TRAIN = train.iloc[:, 1:79]
-    Y_TRAIN = train.iloc[:, 79]
-    X_TEST = test.iloc[:, 1:79]
-    Y_TEST = test.iloc[:, 79]
-    X_CROSSVAL = crossval.iloc[:, 1:79]
-    Y_CROSSVAL = crossval.iloc[:, 79]
-    Y_TRAIN = gen_data.one_hot_coding(Y_TRAIN, 15)
-    Y_TEST = gen_data.one_hot_coding(Y_TEST, 15)
-    Y_CROSSVAL = gen_data.one_hot_coding(Y_CROSSVAL, 15)
+    # Separate the data into three sets and change the labels to one-hot encoding
+    x_train = train.iloc[:, 1:79]
+    y_train = train.iloc[:, 79]
+    x_test = test.iloc[:, 1:79]
+    y_test = test.iloc[:, 79]
+    x_crossval = crossval.iloc[:, 1:79]
+    y_crossval = crossval.iloc[:, 79]
+    y_train = gen_data.one_hot_coding(y_train, 15)
+    y_test = gen_data.one_hot_coding(y_test, 15)
+    y_crossval = gen_data.one_hot_coding(y_crossval, 15)
 
-    # normalization
-    X_TRAIN, X_TEST, X_CROSSVAL = gen_data.normalize(
-        X_TRAIN, X_TEST, X_CROSSVAL)
+    # Normalization
+    x_train, x_test, x_crossval = gen_data.normalize(
+        x_train, x_test, x_crossval)
 
     print(
-        X_TRAIN.shape,
-        Y_TRAIN.shape,
-        X_TEST.shape,
-        Y_TEST.shape,
-        X_CROSSVAL.shape,
-        Y_CROSSVAL.shape)
+        x_train.shape,
+        y_train.shape,
+        x_test.shape,
+        y_test.shape,
+        x_crossval.shape,
+        y_crossval.shape)
 
-    # create the neural Network
+    # Create the neural Network
     input_data = tf.placeholder(
         dtype='float', shape=[None, 78], name='input')
     target_labels = tf.placeholder(
@@ -68,7 +68,7 @@ def main():
     nb = NetworkBuilder("Reseau1", input_data, 3, [256, 256, 15], 2, 0)
     nb.create_network()
 
-    # definition of the optimizer with tensorflow
+    # Definition of the optimizer with Tensorflow
     with tf.name_scope("Optimization") as scope:
         global_step = tf.Variable(0, name='global_step', trainable=False)
         cost = tf.nn.softmax_cross_entropy_with_logits_v2(
@@ -79,7 +79,7 @@ def main():
             learning_rate=0.001).minimize(
             cost, global_step=global_step)
 
-    # definition of the accuracy with tensorflow
+    # Definition of the accuracy with Tensorflow
     with tf.name_scope('accuracy') as scope:
         correct_pred = tf.equal(
             tf.argmax(
@@ -92,22 +92,16 @@ def main():
             name='acu')
         tf.summary.scalar("acu", accuracy)
 
-    # summary for tensorboard
-    with tf.Session() as sess:
-        summaryMerged = tf.summary.merge_all()
-        filename = "./summary_log"
-        writer = tf.summary.FileWriter(filename, sess.graph)
-
-    # saver for save the model
+    # Saver for the model
     saver = tf.train.Saver()
 
-    # main process of tensorflow
+    # Main process of tensorflow
     with tf.Session() as sess:
 
         if is_train:
-            summaryMerged = tf.summary.merge_all()
+            summary_merged = tf.summary.merge_all()
             filename = "./summary_log/run1"
-            # setting global steps
+            # Setting global steps
             tf.global_variables_initializer().run()
 
             if os.path.exists(model_save_path +
@@ -119,15 +113,16 @@ def main():
 
             for epoch in range(epochs):
 
-                data, label, batch_num = gen_data.shuffle(X_TRAIN,
-                                                          Y_TRAIN, batchSize)
-
+                data, label, batch_num = gen_data.shuffle(x_train,
+                                                          y_train, batchSize)
+                steps = 0
+                
                 for i in range(batch_num):
 
                     data_batch, label_batch = gen_data.batch(
                         data, label, i, batchSize)
 
-                    error, sum_out, acu, steps, _ = sess.run([cost, summaryMerged, accuracy, global_step, optimizer],
+                    error, sum_out, acu, steps, _ = sess.run([cost, summary_merged, accuracy, global_step, optimizer],
                                                              feed_dict={input_data: data_batch,
                                                                         target_labels: label_batch})
                     writer.add_summary(sum_out, steps)
@@ -152,11 +147,11 @@ def main():
                         global_step=steps)
                 # Loss and Accuracy on train and cross-validation set every 10
                 # epochs
-                if (epoch % 10 == 0) and (validation):
+                if (epoch % 10 == 0) and validation:
                     cross_loss, cross_acc = sess.run([cost, accuracy], feed_dict={
-                        input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
+                        input_data: x_crossval, target_labels: y_crossval})
                     train_loss, train_acc = sess.run([cost, accuracy], feed_dict={
-                        input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
+                        input_data: x_crossval, target_labels: y_crossval})
                     print(
                         'Train  ---   Loss :%f, Accuracy :%f' %
                         (train_loss, train_acc))
@@ -164,14 +159,15 @@ def main():
                         'Cross-validation  ---   Loss :%f, Accuracy :%f' %
                         (cross_loss, cross_acc))
 
-            # Loss and Accuracy on train and cross-validation set in the end of training
+            # Loss and Accuracy on train and cross-validation set in the end of
+            # training
             cross_loss, cross_acc, cross_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
-                input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
+                input_data: x_crossval, target_labels: y_crossval})
             train_loss, train_acc, train_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
-                input_data: X_TRAIN, target_labels: Y_TRAIN})
+                input_data: x_train, target_labels: y_train})
 
-            # confusion matrix of training set
-            train_true = np.argmax(Y_TRAIN, axis=1)
+            # Confusion matrix of training set
+            train_true = np.argmax(y_train, axis=1)
             train_predict = np.argmax(train_prediction, axis=1)
             train_confuse_mat = sess.run(
                 tf.convert_to_tensor(
@@ -179,8 +175,8 @@ def main():
                         train_true, train_predict)))
             print(train_confuse_mat)
 
-            # confusion matrix of cross validation set
-            cross_true = np.argmax(Y_CROSSVAL, axis=1)
+            # Confusion matrix of cross validation set
+            cross_true = np.argmax(y_crossval, axis=1)
             cross_predict = np.argmax(train_prediction, axis=1)
             confuse_mat = sess.run(
                 tf.convert_to_tensor(
@@ -188,7 +184,7 @@ def main():
                         cross_true, cross_predict)))
             print(confuse_mat)
 
-            # precision et recall
+            # Accuracy and recall
             train_precision = precision_score(
                 train_true, train_predict, average=None)
             train_recall = recall_score(
@@ -198,22 +194,22 @@ def main():
             cross_recall = recall_score(
                 cross_true, cross_predict, average=None)
 
-            # print the result
+            # Print the result
             print(
                 'Train  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
-                (train_loss, train_acc, train_precision*train_recall))
+                (train_loss, train_acc, train_precision * train_recall))
             print(
                 'Cross-validation  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
-                (cross_loss, cross_acc, cross_precision*cross_recall))
+                (cross_loss, cross_acc, cross_precision * cross_recall))
 
         else:
             saver.restore(sess, tf.train.latest_checkpoint(model_save_path))
             test_loss, test_acc, test_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
-                input_data: X_TEST, target_labels: Y_TEST})
+                input_data: x_test, target_labels: y_test})
             print('val_loss:%f, val_acc:%f' % (test_loss, test_acc))
 
-            # confusion matrix
-            test_true = np.argmax(Y_TEST, axis=1)
+            # Confusion matrix
+            test_true = np.argmax(y_test, axis=1)
             test_predict = np.argmax(test_prediction, axis=1)
             confuse_mat = sess.run(
                 tf.convert_to_tensor(
