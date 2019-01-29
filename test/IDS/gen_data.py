@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.utils import shuffle
+
 from sklearn import preprocessing
 import tensorflow as tf
 
@@ -16,11 +16,9 @@ def shuffle(data, labels, batch_size):
     return data, labels, batch_number
 
 
-def batch(data, label, batch_num, batchSize):
-    data_batch = data[(batch_num * batchSize)
-                       : ((batch_num + 1) * batchSize) - 1]
-    label_batch = label[(batch_num * batchSize)
-                         : ((batch_num + 1) * batchSize) - 1]
+def batch(data, label, num, batch_size):
+    data_batch = data[(num * batch_size): ((num + 1) * batch_size) - 1]
+    label_batch = label[(num * batch_size): ((num + 1) * batch_size) - 1]
     return data_batch, label_batch
 
 
