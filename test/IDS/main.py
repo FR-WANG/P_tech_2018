@@ -1,24 +1,18 @@
 from __future__ import division, print_function, absolute_import
 from NetworkBuilderV3 import NetworkBuilder
-from sklearn import preprocessing
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from os.path import isfile, join
-from os import walk
-from shutil import copyfile
 import os
-import pickle
 import tensorflow as tf
-import csv
 import gen_data
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+import visualization
 
-#print everything
+# print everything
 np.set_printoptions(threshold=np.inf)
 
 
 # distinguish the fonction of train and test
-is_train = True
+is_train = False
 # choose if cross-validation is done during the training
 validation = True
 
@@ -96,6 +90,7 @@ def main():
                 correct_pred,
                 tf.float32),
             name='acu')
+        tf.summary.scalar("acu", accuracy)
 
     # summary for tensorboard
     with tf.Session() as sess:
@@ -168,22 +163,15 @@ def main():
                     print(
                         'Cross-validation  ---   Loss :%f, Accuracy :%f' %
                         (cross_loss, cross_acc))
-            # Loss and Accuracy on train and cross-validation set in the end of
-            # training
+
+            # Loss and Accuracy on train and cross-validation set in the end of training
             cross_loss, cross_acc, cross_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
                 input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
             train_loss, train_acc, train_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
-                input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
-            print(
-                'Train  ---   Loss :%f, Accuracy :%f' %
-                (train_loss, train_acc))
-            print(
-                'Cross-validation  ---   Loss :%f, Accuracy :%f' %
-                (cross_loss, cross_acc))
+                input_data: X_TRAIN, target_labels: Y_TRAIN})
 
             # confusion matrix of training set
             train_true = np.argmax(Y_TRAIN, axis=1)
-
             train_predict = np.argmax(train_prediction, axis=1)
             train_confuse_mat = sess.run(
                 tf.convert_to_tensor(
@@ -193,13 +181,30 @@ def main():
 
             # confusion matrix of cross validation set
             cross_true = np.argmax(Y_CROSSVAL, axis=1)
-
             cross_predict = np.argmax(train_prediction, axis=1)
             confuse_mat = sess.run(
                 tf.convert_to_tensor(
                     tf.confusion_matrix(
                         cross_true, cross_predict)))
             print(confuse_mat)
+
+            # precision et recall
+            train_precision = precision_score(
+                train_true, train_predict, average=None)
+            train_recall = recall_score(
+                train_true, train_predict, average=None)
+            cross_precision = precision_score(
+                cross_true, cross_predict, average=None)
+            cross_recall = recall_score(
+                cross_true, cross_predict, average=None)
+
+            # print the result
+            print(
+                'Train  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
+                (train_loss, train_acc, train_precision*train_recall))
+            print(
+                'Cross-validation  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
+                (cross_loss, cross_acc, cross_precision*cross_recall))
 
         else:
             saver.restore(sess, tf.train.latest_checkpoint(model_save_path))
@@ -209,13 +214,13 @@ def main():
 
             # confusion matrix
             test_true = np.argmax(Y_TEST, axis=1)
-
             test_predict = np.argmax(test_prediction, axis=1)
             confuse_mat = sess.run(
                 tf.convert_to_tensor(
                     tf.confusion_matrix(
                         test_true, test_predict)))
             print(confuse_mat)
+            visualization.plot_confusion_matrix(confuse_mat)
 
 
 if __name__ == "__main__":
