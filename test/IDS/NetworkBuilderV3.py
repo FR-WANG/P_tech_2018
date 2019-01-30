@@ -2,31 +2,49 @@ import tensorflow as tf
 
 
 class NetworkBuilder:
-    '''Classe permettant la création automatisée du réseau de neurones
-    Paramètres :
-    - name : permet de donner un nom au réseau
-    - inputSize : nombre de paramètres d'entrée
-    - outputSize : nombre de classes en sortie
-    - nbLayers : nombre de couches du réseau de neurones
-    - sizeLayers : tableau contenant le nombre de neurones pour chaque couche
-    - activation : permet de choisir la fonction d'activation utilisée entre chaque couche
-        1 - Relu
-        2 - Leaky Relu
-        3 - Elu
-    - drop : taux de drop entre les couches (entre 0 et 1)'''
+    """
+    Class creating the neural network
+
+    Parameter
+    ---------
+
+    name : str
+        gives a name to the network
+    inputLayer : Tensorflow placeholder
+        input of the network
+    nbLayers : int
+        number of layers in the neural network
+    sizeLayers : int array
+        array defining the number of nodes for each layer
+    activation : int
+        allows to chose the activation function (default is Relu):
+            1 - Relu
+            2 - Leaky Relu
+            3 - Elu
+            4 - Selu
+    drop : float
+        probability to keep, between 0 and 1
+
+
+    Return
+    ------
+
+    Neural network
+
+    """
 
     def __init__(
             self,
             name,
-            inputLayer,
-            nbLayers,
-            sizeLayers,
+            input_layer,
+            nb_layers,
+            size_layers,
             activation,
             drop):
         self.name = name
-        self.input_data = inputLayer
-        self.nbLayers = nbLayers
-        self.sizeLayers = sizeLayers
+        self.input_data = input_layer
+        self.nbLayers = nb_layers
+        self.sizeLayers = size_layers
         self.model = self.input_data
         self.prediction = self.model
         self.droprate = drop
@@ -45,10 +63,14 @@ class NetworkBuilder:
             else:
                 if self.activationType == 1:
                     self.model = tf.nn.relu(self.model)
-                if self.activationType == 2:
+                elif self.activationType == 2:
                     self.model = tf.nn.leaky_relu(self.model)
-                if self.activationType == 3:
+                elif self.activationType == 3:
                     self.model = tf.nn.elu(self.model)
+                elif self.activationType == 4:
+                    self.model = tf.nn.selu(self.model)
+                else:
+                    self.model = tf.nn.relu(self.model)
 
-                if self.droprate != 0:
+                if self.droprate != 1:
                     self.model = tf.layers.dropout(self.model, self.droprate)
