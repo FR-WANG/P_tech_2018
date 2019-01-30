@@ -12,7 +12,7 @@ np.set_printoptions(threshold=np.inf)
 
 
 # distinguish the fonction of train and test
-is_train = False
+is_train = True
 # choose if cross-validation is done during the training
 validation = True
 
@@ -75,8 +75,11 @@ def main():
             logits=nb.model, labels=target_labels)
         cost = tf.reduce_mean(cost)
         tf.summary.scalar("cost", cost)
+        # adaptive learning rate
+        lr = tf.train.exponential_decay(
+            0.001, global_step, 10000, 0.96, staircase=True)
         optimizer = tf.train.AdamOptimizer(
-            learning_rate=0.001).minimize(
+            learning_rate=lr).minimize(
             cost, global_step=global_step)
 
     # definition of the accuracy with tensorflow
@@ -141,7 +144,9 @@ def main():
                             "err=",
                             error,
                             "accuracy=",
-                            acu)
+                            acu,
+                            "lr=%.6f"
+                            % (lr.eval()))
                 # Save the model every epoch
                 if epoch % 1 == 0:
                     print("Saving the model")
@@ -164,7 +169,8 @@ def main():
                         'Cross-validation  ---   Loss :%f, Accuracy :%f' %
                         (cross_loss, cross_acc))
 
-            # Loss and Accuracy on train and cross-validation set in the end of training
+            # Loss and Accuracy on train and cross-validation set in the end of
+            # training
             cross_loss, cross_acc, cross_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
                 input_data: X_CROSSVAL, target_labels: Y_CROSSVAL})
             train_loss, train_acc, train_prediction = sess.run([cost, accuracy, nb.prediction], feed_dict={
@@ -201,10 +207,10 @@ def main():
             # print the result
             print(
                 'Train  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
-                (train_loss, train_acc, train_precision*train_recall))
+                (train_loss, train_acc, train_precision * train_recall))
             print(
                 'Cross-validation  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
-                (cross_loss, cross_acc, cross_precision*cross_recall))
+                (cross_loss, cross_acc, cross_precision * cross_recall))
 
         else:
             saver.restore(sess, tf.train.latest_checkpoint(model_save_path))
