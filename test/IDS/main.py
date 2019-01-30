@@ -11,12 +11,12 @@ import visualization
 np.set_printoptions(threshold=np.inf)
 
 # Distinguish the function of train and test
-is_train = False
+is_train = True
 # choose if cross-validation is done during the training
 validation = True
 
 # Definition the number of epochs and batchSize
-epochs = 50
+epochs = 5000
 batchSize = 50
 
 # Definition of the path : to change accordingly to your path leading to
@@ -102,7 +102,7 @@ def main():
             filename = "./summary_log/run1"
             # Setting global steps
 
-            tf.variance_scaling_initializer(factor=1.0, mode='FAN_IN')
+            #tf.variance_scaling_initializer(factor=1.0, mode='FAN_IN')
             tf.global_variables_initializer().run()
 
             if os.path.exists(model_save_path +
@@ -178,7 +178,7 @@ def main():
 
             # Confusion matrix of cross validation set
             cross_true = np.argmax(y_crossval, axis=1)
-            cross_predict = np.argmax(train_prediction, axis=1)
+            cross_predict = np.argmax(cross_prediction, axis=1)
             confuse_mat = sess.run(
                 tf.convert_to_tensor(
                     tf.confusion_matrix(
@@ -198,11 +198,13 @@ def main():
 
             # Print the result
             print(
-                'Train  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
-                (train_loss, train_acc, train_precision * train_recall))
+                'Train  ---   Loss :%f, Accuracy :%f,' %
+                (train_loss, train_acc,))
+            print(train_precision * train_recall)
             print(
-                'Cross-validation  ---   Loss :%f, Accuracy :%f, precision*recall :%f' %
-                (cross_loss, cross_acc, cross_precision * cross_recall))
+                'Crossval  ---   Loss :%f, Accuracy :%f,' %
+                (cross_loss, cross_acc,))
+            print(cross_precision * cross_recall)
 
         else:
             saver.restore(sess, tf.train.latest_checkpoint(model_save_path))

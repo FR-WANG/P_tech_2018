@@ -1,4 +1,5 @@
 import tensorflow as tf
+import math
 
 
 class NetworkBuilder:
@@ -54,7 +55,7 @@ class NetworkBuilder:
         for i in range(0, self.nbLayers):
             input_size = self.model.get_shape().as_list()[-1]
             weights = tf.Variable(tf.random_normal(
-                [input_size, self.sizeLayers[i]]), name='dense_weigh')
+                [input_size, self.sizeLayers[i]],stddev=math.sqrt(2/input_size)), name='dense_weigh')
             biases = tf.Variable(tf.random_normal(
                 [self.sizeLayers[i]]), name='dense_biases')
             self.model = tf.matmul(self.model, weights) + biases
