@@ -35,7 +35,8 @@ def main():
 
     print(type(train))
 
-    # Separate the data into three sets and change the labels to one-hot encoding
+    # Separate the data into three sets and change the labels to one-hot
+    # encoding
     x_train = train.iloc[:, 1:79]
     y_train = train.iloc[:, 79]
     x_test = test.iloc[:, 1:79]
@@ -72,7 +73,7 @@ def main():
         cost = tf.nn.softmax_cross_entropy_with_logits_v2(
             logits=nb.model, labels=target_labels)
         cost = tf.reduce_mean(cost)
-        tf.summary.scalar("cost", cost)
+        loss_summary = tf.summary.scalar("cost", cost)
         optimizer = tf.train.AdamOptimizer(
             learning_rate=0.001).minimize(
             cost, global_step=global_step)
@@ -88,7 +89,7 @@ def main():
                 correct_pred,
                 tf.float32),
             name='acu')
-        tf.summary.scalar("acu", accuracy)
+        accuracy_summary = tf.summary.scalar("acu", accuracy)
 
     # Saver for the model
     saver = tf.train.Saver()
@@ -98,11 +99,9 @@ def main():
 
         if is_train:
 
-            summary_merged = tf.summary.merge_all()
-            filename = "./summary_log/run1"
+            filename = "./summary_log/train"
+            filename2 = "./summary_log/cross_val"
             # Setting global steps
-
-            #tf.variance_scaling_initializer(factor=1.0, mode='FAN_IN')
             tf.global_variables_initializer().run()
 
             if os.path.exists(model_save_path +
@@ -110,7 +109,9 @@ def main():
                 # saver = tf.train.import_meta_graph('./saved '+modelName+'/model.ckpt.meta')
                 saver.restore(
                     sess, tf.train.latest_checkpoint(model_save_path))
-            writer = tf.summary.FileWriter(filename, sess.graph)
+            train_summary_writer = tf.summary.FileWriter(filename, sess.graph)
+            validation_summary_writer = tf.summary.FileWriter(
+                filename2, sess.graph)
 
             for epoch in range(epochs):
 
@@ -123,10 +124,9 @@ def main():
                     data_batch, label_batch = gen_data.batch(
                         data, label, i, batchSize)
 
-                    error, sum_out, acu, steps, _ = sess.run([cost, summary_merged, accuracy, global_step, optimizer],
-                                                             feed_dict={input_data: data_batch,
-                                                                        target_labels: label_batch})
-                    writer.add_summary(sum_out, steps)
+                    error, acu, steps, _ = sess.run([cost, accuracy, global_step, optimizer],
+                                                    feed_dict={input_data: data_batch,
+                                                               target_labels: label_batch})
                     if i % 1000 == 0:
                         print(
                             "epoch=",
@@ -149,16 +149,26 @@ def main():
                 # Loss and Accuracy on train and cross-validation set every 10
                 # epochs
                 if (epoch % 10 == 0) and validation:
-                    cross_loss, cross_acc = sess.run([cost, accuracy], feed_dict={
-                        input_data: x_crossval, target_labels: y_crossval})
-                    train_loss, train_acc = sess.run([cost, accuracy], feed_dict={
-                        input_data: x_crossval, target_labels: y_crossval})
+                    cross_loss, sum_cross_loss, sum_cross_acc, cross_acc = sess.run(
+                        [
+                            cost, loss_summary, accuracy_summary, accuracy], feed_dict={
+                            input_data: x_crossval, target_labels: y_crossval})
+                    train_loss, sum_train_loss, sum_train_acc, train_acc = sess.run(
+                        [
+                            cost, loss_summary, accuracy_summary, accuracy], feed_dict={
+                            input_data: x_train, target_labels: y_train})
                     print(
                         'Train  ---   Loss :%f, Accuracy :%f' %
                         (train_loss, train_acc))
                     print(
                         'Cross-validation  ---   Loss :%f, Accuracy :%f' %
                         (cross_loss, cross_acc))
+
+                    train_summary_writer.add_summary(sum_train_loss, epoch)
+                    train_summary_writer.add_summary(sum_train_acc, epoch)
+                    validation_summary_writer.add_summary(
+                        sum_cross_loss, epoch)
+                    validation_summary_writer.add_summary(sum_cross_acc, epoch)
 
             # Loss and Accuracy on train and cross-validation set in the end of
             # training
