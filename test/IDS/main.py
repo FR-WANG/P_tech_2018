@@ -67,12 +67,20 @@ def main():
     nb = NetworkBuilder("Reseau1", input_data, 3, [256, 256, 15], 4, 1)
     nb.create_network()
 
+    # L2 regularization
+    weights = nb.allWeights
+    beta = 0.01
+    regularizers = 0
+    for i in range(0, len(weights)):
+        regularizers += tf.nn.l2_loss(weights[i])
+
     # Definition of the optimizer with Tensorflow
     with tf.name_scope("Optimization") as scope:
         global_step = tf.Variable(0, name='global_step', trainable=False)
         cost = tf.nn.softmax_cross_entropy_with_logits_v2(
             logits=nb.model, labels=target_labels)
-        cost = tf.reduce_mean(cost)
+        # L2 reg
+        cost = tf.reduce_mean(cost + beta * regularizers)
         loss_summary = tf.summary.scalar("cost", cost)
         optimizer = tf.train.AdamOptimizer(
             learning_rate=0.001).minimize(

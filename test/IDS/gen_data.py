@@ -7,6 +7,29 @@ import tensorflow as tf
 
 
 def shuffle(data, labels, batch_size):
+    """
+    Function to shuffle the data and labels
+
+    Parameter
+    ---------
+
+    data : DataFrame
+        gives the data to shuffle
+    labels : DataFrame
+        gives the labels to shuffle
+    batch_size : int
+        number of data in a batch
+
+    Return
+    ------
+
+    data : DataFrame
+        gives the data after shuffling
+    labels : DataFrame
+        gives the labels after shuffling
+    batch_number : int
+        number of batchs in a epoch
+    """
     rng_state = np.random.get_state()
     np.random.shuffle(data)
     np.random.set_state(rng_state)
@@ -18,6 +41,27 @@ def shuffle(data, labels, batch_size):
 
 
 def batch(data, label, num, batch_size):
+    """
+    Function to divide the data and labels into batches
+
+    Parameter
+    ---------
+
+    data : DataFrame
+        gives the data to be divided
+    label : DataFrame
+        gives the labels to be divided
+    batch_size : int
+        number of data in a batch
+
+    Return
+    ------
+
+    data_batch : DataFrame
+        gives the data of one batch
+    label_batch : DataFrame
+        gives the labels of one batch
+    """
     data_batch = data[(num * batch_size): ((num + 1) * batch_size) - 1]
     label_batch = label[(num * batch_size): ((num + 1) * batch_size) - 1]
     return data_batch, label_batch
@@ -25,6 +69,18 @@ def batch(data, label, num, batch_size):
 
 # load data
 def loaddata():
+    """
+    Function to read csv file
+
+    Parameter
+    ---------
+
+
+    Return
+    ------
+
+
+    """
     train = pd.read_csv(
         "~/PycharmProjects/data/TrafficLabelling/train_set.csv",
         encoding="ISO-8859-1",
@@ -41,6 +97,20 @@ def loaddata():
 
 
 def changelabel(train, test, crossval):
+    """
+    Function to change labels from text to numbers
+
+    Parameter
+    ---------
+
+    train, test, crossval : DataFrame
+        the labels need to be changed
+    Return
+    ------
+
+    train, test, crossval : DataFrame
+        the labels changed
+    """
     le = preprocessing.LabelEncoder()
     le.fit(['BENIGN',
             'FTP-Patator',
@@ -63,12 +133,21 @@ def changelabel(train, test, crossval):
     return train, test, crossval
 
 
-def z_normalisation(data):
-    data = preprocessing.scale(data)
-    return data, data.mean, data.std
-
-
 def normalize(train, test, crossval):
+    """
+    Function to imply the normalization
+
+    Parameter
+    ---------
+
+    train, test, crossval : DataFrame
+        the data need to be normalized
+    Return
+    ------
+
+    train_scaled, test_scaled, crossval_scaled : DataFrame
+        the data after normalized
+    """
     scaler = preprocessing.StandardScaler().fit(train)
     train_scaled = scaler.transform(train)
     test_scaled = scaler.transform(test)
@@ -77,6 +156,20 @@ def normalize(train, test, crossval):
 
 
 def one_hot_coding(y, num_classes=None):
+    """
+    Function to imply the one_hot_coding
+
+    Parameter
+    ---------
+
+    y : DataFrame
+        the data need to be coded with one_hot
+    Return
+    ------
+
+    categorical: DataFrame
+        the data after coded with one_hot
+    """
     y = np.array(y, dtype='int')
     input_shape = y.shape
     if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
